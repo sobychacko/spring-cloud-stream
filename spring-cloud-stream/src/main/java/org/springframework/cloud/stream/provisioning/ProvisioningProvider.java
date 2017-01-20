@@ -39,7 +39,7 @@ import org.springframework.cloud.stream.binder.ProducerProperties;
  *
  * @since 1.2
  */
-public interface ProvisioningProvider<C extends ConsumerProperties, P extends ProducerProperties, CD, PD> {
+public interface ProvisioningProvider<C extends ConsumerProperties, P extends ProducerProperties, CD, PD, DLQ> {
 
 	/**
 	 * Creates target destinations for outbound channels. The implementation
@@ -59,5 +59,7 @@ public interface ProvisioningProvider<C extends ConsumerProperties, P extends Pr
 	 * @return reference to the consumer destination
 	 */
 	CD provisionConsumerDestination(String name, String group, C properties);
+
+	DLQ provisionDlq();
 
 }
