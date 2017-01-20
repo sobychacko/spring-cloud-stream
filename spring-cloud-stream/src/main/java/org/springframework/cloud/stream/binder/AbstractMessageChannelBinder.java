@@ -84,7 +84,7 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 
 	/**
 	 * Binds an outbound channel to a given destination. The implementation delegates to
-	 * {@link ProvisioningProvider#createProducerDestinationIfNecessary(String, ProducerProperties)}
+	 * {@link ProvisioningProvider#provisionProducerDestination(String, ProducerProperties)}
 	 * and {@link #createProducerMessageHandler(PD, ProducerProperties)} for
 	 * handling the middleware specific logic. If the returned producer message handler is an
 	 * {@link InitializingBean} then {@link InitializingBean#afterPropertiesSet()} will be
@@ -102,7 +102,7 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 			final P producerProperties) throws BinderException {
 		Assert.isInstanceOf(SubscribableChannel.class, outputChannel,
 				"Binding is supported only for SubscribableChannel instances");
-		PD producerDestination = this.provisioningProvider.createProducerDestinationIfNecessary(destination, producerProperties);
+		PD producerDestination = this.provisioningProvider.provisionProducerDestination(destination, producerProperties);
 		final MessageHandler producerMessageHandler;
 		try {
 			producerMessageHandler = createProducerMessageHandler(producerDestination, producerProperties);
@@ -168,7 +168,7 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 
 	/**
 	 * Binds an inbound channel to a given destination. The implementation delegates to
-	 * {@link ProvisioningProvider#createConsumerDestinationIfNecessary(String, String, ConsumerProperties)}
+	 * {@link ProvisioningProvider#provisionConsumerDestination(String, String, ConsumerProperties)}
 	 * and {@link #createConsumerEndpoint(String, String, Object, ConsumerProperties)}
 	 * for handling middleware-specific logic. If the returned consumer endpoint is an
 	 * {@link InitializingBean} then {@link InitializingBean#afterPropertiesSet()} will be
@@ -187,7 +187,7 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 			final C properties) throws BinderException {
 		MessageProducer consumerEndpoint = null;
 		try {
-			CD destination = this.provisioningProvider.createConsumerDestinationIfNecessary(name, group, properties);
+			CD destination = this.provisioningProvider.provisionConsumerDestination(name, group, properties);
 			final boolean extractEmbeddedHeaders = HeaderMode.embeddedHeaders.equals(
 					properties.getHeaderMode()) && !this.supportsHeadersNatively;
 			ReceivingHandler rh = new ReceivingHandler(extractEmbeddedHeaders);

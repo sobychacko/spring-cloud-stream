@@ -27,8 +27,8 @@ import org.springframework.cloud.stream.binder.ProducerProperties;
  * Implementations must implement the following methods:
  *
  * <ul>
- * <li>{@link #createProducerDestinationIfNecessary(String, ProducerProperties)}</li>
- * <li>{@link #createConsumerDestinationIfNecessary(String, String, ConsumerProperties)} </li>
+ * <li>{@link #provisionProducerDestination(String, ProducerProperties)}</li>
+ * <li>{@link #provisionConsumerDestination(String, String, ConsumerProperties)} </li>
  * </ul>
  *
  * @param <C>  the consumer properties type
@@ -48,7 +48,7 @@ public interface ProvisioningProvider<C extends ConsumerProperties, P extends Pr
 	 * @param name       the name of the producer destination
 	 * @param properties producer properties
 	 */
-	PD createProducerDestinationIfNecessary(String name, P properties);
+	PD provisionProducerDestination(String name, P properties);
 
 	/**
 	 * Creates the middleware destination the consumer will start to consume data from.
@@ -58,6 +58,6 @@ public interface ProvisioningProvider<C extends ConsumerProperties, P extends Pr
 	 * @param properties consumer properties
 	 * @return reference to the consumer destination
 	 */
-	CD createConsumerDestinationIfNecessary(String name, String group, C properties);
+	CD provisionConsumerDestination(String name, String group, C properties);
 
 }
