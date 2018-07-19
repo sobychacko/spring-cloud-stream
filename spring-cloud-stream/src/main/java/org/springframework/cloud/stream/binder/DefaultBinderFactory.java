@@ -36,6 +36,8 @@ import org.springframework.cloud.stream.reflection.GenericsUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.util.Assert;
@@ -52,6 +54,8 @@ import org.springframework.util.StringUtils;
  * @author Oleg Zhurakousky
  */
 public class DefaultBinderFactory implements BinderFactory, DisposableBean, ApplicationContextAware {
+
+	private static ConfigurableApplicationContext CONTEXT;
 
 	private final Map<String, BinderConfiguration> binderConfigurations;
 
@@ -88,8 +92,8 @@ public class DefaultBinderFactory implements BinderFactory, DisposableBean, Appl
 	}
 
 	@Override
-	public void destroy() throws Exception {
-		this.binderInstanceCache.values().stream().map(e -> e.getValue()).forEach(ctx -> ctx.close());
+	public void destroy() {
+		this.binderInstanceCache.values().stream().map(Entry::getValue).forEach(ConfigurableApplicationContext::close);
 		this.defaultBinderForBindingTargetType.clear();
 	}
 
@@ -229,6 +233,11 @@ public class DefaultBinderFactory implements BinderFactory, DisposableBean, Appl
 			if (useApplicationContextAsParent) {
 				springApplicationBuilder.parent(this.context);
 			}
+			else {
+				this.CONTEXT = this.context;
+				springApplicationBuilder.sources(OuterContextProvider.class);
+				springApplicationBuilder.registerShutdownHook(false);
+			}
 
 			if (environment != null && (useApplicationContextAsParent || binderConfiguration.isInheritEnvironment())) {
 				StandardEnvironment binderEnvironment = new StandardEnvironment();
@@ -288,4 +297,14 @@ public class DefaultBinderFactory implements BinderFactory, DisposableBean, Appl
 		void afterBinderContextInitialized(String configurationName,
 				ConfigurableApplicationContext binderContext);
 	}
+
+	@Configuration
+	static class OuterContextProvider {
+
+		@Bean
+		public ConfigurableApplicationContext outerContext() {
+			return CONTEXT;
+		}
+	}
+
 }
