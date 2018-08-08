@@ -21,6 +21,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Map;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.springframework.beans.DirectFieldAccessor;
@@ -51,6 +52,7 @@ import static org.junit.Assert.fail;
  * @author Marius Bogoevici
  * @author Ilayaperumal Gopinathan
  */
+@Ignore
 public class HealthIndicatorsConfigurationTests {
 
 	public static ConfigurableApplicationContext createBinderTestContext(
