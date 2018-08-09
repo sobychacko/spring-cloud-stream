@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.SearchStrategy;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.stream.binder.BinderConfiguration;
 import org.springframework.cloud.stream.binder.BinderFactory;
@@ -88,7 +89,7 @@ import org.springframework.util.Assert;
 @EnableConfigurationProperties({ BindingServiceProperties.class, SpringIntegrationProperties.class })
 @Import({ContentTypeConfiguration.class, DestinationPublishingMetricsAutoConfiguration.class, SpelExpressionConverterConfiguration.class})
 @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
-@ConditionalOnBean(BinderTypeRegistry.class)
+@ConditionalOnBean(value = BinderTypeRegistry.class, search = SearchStrategy.CURRENT)
 public class BindingServiceConfiguration {
 
 	public static final String STREAM_LISTENER_ANNOTATION_BEAN_POST_PROCESSOR_NAME =
@@ -98,7 +99,7 @@ public class BindingServiceConfiguration {
 	private Collection<DefaultBinderFactory.Listener> binderFactoryListeners;
 
 	@Bean
-	@ConditionalOnMissingBean(BinderFactory.class)
+	@ConditionalOnMissingBean(value = BinderFactory.class, search = SearchStrategy.CURRENT)
 	public BinderFactory binderFactory(BinderTypeRegistry binderTypeRegistry,
 									BindingServiceProperties bindingServiceProperties) {
 		DefaultBinderFactory binderFactory = new DefaultBinderFactory(
@@ -167,7 +168,7 @@ public class BindingServiceConfiguration {
 	}
 
 	@Bean(name = STREAM_LISTENER_ANNOTATION_BEAN_POST_PROCESSOR_NAME)
-	@ConditionalOnMissingBean
+	@ConditionalOnMissingBean(search = SearchStrategy.CURRENT)
 	public static StreamListenerAnnotationBeanPostProcessor streamListenerAnnotationBeanPostProcessor() {
 		return new StreamListenerAnnotationBeanPostProcessor();
 	}
@@ -176,7 +177,7 @@ public class BindingServiceConfiguration {
 	// This conditional is intentionally not in an autoconfig (usually a bad idea) because
 	// it is used to detect a BindingService in the parent context (which we know
 	// already exists).
-	@ConditionalOnMissingBean
+	@ConditionalOnMissingBean(search = SearchStrategy.CURRENT)
 	public BindingService bindingService(BindingServiceProperties bindingServiceProperties,
 			BinderFactory binderFactory, TaskScheduler taskScheduler) {
 		return new BindingService(bindingServiceProperties, binderFactory, taskScheduler);
