@@ -99,7 +99,7 @@ public class BindingServiceConfiguration {
 	private Collection<DefaultBinderFactory.Listener> binderFactoryListeners;
 
 	@Bean
-	@ConditionalOnMissingBean(value = BinderFactory.class, search = SearchStrategy.CURRENT)
+	@ConditionalOnMissingBean(BinderFactory.class)
 	public BinderFactory binderFactory(BinderTypeRegistry binderTypeRegistry,
 									BindingServiceProperties bindingServiceProperties) {
 		DefaultBinderFactory binderFactory = new DefaultBinderFactory(
