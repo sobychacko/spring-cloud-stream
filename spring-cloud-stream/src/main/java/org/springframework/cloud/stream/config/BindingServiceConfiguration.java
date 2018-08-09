@@ -167,6 +167,7 @@ public class BindingServiceConfiguration {
 	}
 
 	@Bean(name = STREAM_LISTENER_ANNOTATION_BEAN_POST_PROCESSOR_NAME)
+	@ConditionalOnMissingBean
 	public static StreamListenerAnnotationBeanPostProcessor streamListenerAnnotationBeanPostProcessor() {
 		return new StreamListenerAnnotationBeanPostProcessor();
 	}
