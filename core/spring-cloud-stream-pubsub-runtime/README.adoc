@@ -1,0 +1,43 @@
+# Spring Cloud Stream Experimental PubSub Runtime
+
+NOTE: This module is in experimental status and do not recommend using for production workloads.
+
+## Introduction
+
+There are use cases when the application developer may not want to interact directly with the messaging middleware and it's complexities.
+In this scenario, the developer wants to rely on some other persona - a platform one - to tackle interacting with the messaging middleware and let this persona communicate to the app developer (and vice-versa) via a commonly agreed upon protocol such as HTTP or gRPC.
+This module attempts to provide this runtime platform that is responsible for all the middleware communication.
+
+## Benefits of this approach
+
+* The app developer can exclusively focus on the business logic without making conceptual models or abstractions about the messaging middleware such as Apache Kafka or RabbitMQ.
+* The application communicates to a runtime via a wellknown protocol such as HTTP or gRPC.
+* Suitable for a sidecar model where the runtime and the application co-exist on the same node on a cluster (such as a Kubernetes POD).
+
+## Disadvantages
+
+* This model keeps the application developer away from the messaging middleware since there is a strict boundary between the application and the runtime.
+* If something goes wrong, debugging needs to happen on the runtime although this can be a benefit.
+* With simple HTTP, this model might not be suitable for a high throughput/low latency applications.
+
+As is evident from the disadvantages section above, this model may not be the right one depending on your application.
+However, there are some valid use cases, where this structuring might make sense.
+
+## Situations and Use Cases
+
+* Imagine an enterprise, where there are hundreds of application developers well versed in the application domain, but not middleware experts. The enterprise wants to centralize the use of the messaging middleware rather than individual teams or members access the middleware systems directly.
+* Upon consuming new messages from middleware, if the workflow requires, accessing a REST endpoint or something similar, this model maps to that scenario right away.
+* When publishing new messages, there are critical flows and non-critical flows - such as various backoffice processing that does not need to be on the critical path. These non-critical paths could be asynchronously handled through a backend REST of similar endpoints.
+
+As noted in the sections above, this model is not appropriate for all use cases, but there are plenty that may benefit from this type of abstractions.
+With this background, let us look into see how the PubSub runtime makes what it promises possible.
+
+## Running PubSub Runtime Standalone
+
+First, you need to create a Spring Boot application and add the module `spring-cloud-stream-pubsub-runtime`.
+After that, you need to add your choice of the binder (Kafka, Rabbit etc.)
+
+NOTE: Kafka Streams or ractive Kafka binders are not compatible with this runtime model.
+
+Build the runtime application, and then you are ready to run it as a standalone PubSub Runtime.
+
