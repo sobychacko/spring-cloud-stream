@@ -23,7 +23,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * @author Soby Chacko
  */
-@ConfigurationProperties("pubsub.runtime")
+@ConfigurationProperties("spring.cloud.stream.pubsub.runtime")
 public class PubSubRuntimeProperties {
 
 	/**

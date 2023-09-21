@@ -35,21 +35,21 @@ public class PubSubRuntimeEnvironmentPostProcessor implements EnvironmentPostPro
 	@Override
 	public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
 		Map<String, Object> additionalProps = new HashMap<>();
-		if (environment.containsProperty("pubsub.runtime.running-mode") && environment.getProperty("pubsub.runtime.running-mode").startsWith("SUBSCRIBER") ||
-			environment.containsProperty("pubsub.runtime.transport-mode") && environment.getProperty("pubsub.runtime.transport-mode").equals("HTTP")) {
+		if (environment.containsProperty("spring.cloud.stream.pubsub.runtime.running-mode") && environment.getProperty("spring.cloud.stream.pubsub.runtime.running-mode").startsWith("SUBSCRIBER") ||
+			environment.containsProperty("spring.cloud.stream.pubsub.runtime.transport-mode") && environment.getProperty("spring.cloud.stream.pubsub.runtime.transport-mode").equals("HTTP")) {
 			additionalProps.put("spring.cloud.function.grpc.server", false);
 		}
-		else if (!environment.containsProperty("pubsub.runtime.transport-mode")) {
+		else if (!environment.containsProperty("spring.cloud.stream.pubsub.runtime.transport-mode")) {
 			additionalProps.put("spring.cloud.function.grpc.server", false);
 		}
-		if (!environment.containsProperty("pubsub.runtime.transport-mode")) {
-			additionalProps.put("pubsub.runtime.transport-mode", "HTTP");
+		if (!environment.containsProperty("spring.cloud.stream.pubsub.runtime.transport-mode")) {
+			additionalProps.put("spring.cloud.stream.pubsub.runtime.transport-mode", "HTTP");
 		}
 		additionalProps.put("spring.cloud.stream.function.autodetect", false);
 
-		if (environment.getProperty("pubsub.runtime.running-mode").startsWith("SUBSCRIBER") &&
-			(!environment.containsProperty("pubsub.runtime.transport-mode") ||
-					environment.getProperty("pubsub.runtime.transport-mode").equals("HTTP"))) {
+		if (environment.getProperty("spring.cloud.stream.pubsub.runtime.running-mode").startsWith("SUBSCRIBER") &&
+			(!environment.containsProperty("spring.cloud.stream.pubsub.runtime.transport-mode") ||
+					environment.getProperty("spring.cloud.stream.pubsub.runtime.transport-mode").equals("HTTP"))) {
 			additionalProps.put("http.request.url-expression", "headers['url']");
 			additionalProps.put("http.request.http-method-expression", new ValueExpression<>(HttpMethod.POST));
 		}

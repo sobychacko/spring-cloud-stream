@@ -17,9 +17,11 @@
 package org.springframework.cloud.stream.pubsub.runtime;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -56,15 +58,36 @@ class PubSubRuntimeEndToEndIntegrationTests {
 		try (ConfigurableApplicationContext context = new SpringApplicationBuilder(AdditionalConfig.class)
 			.run(
 				"--server.port=0",
-				"--pubsub.runtime.running-mode=PUBLISHER",
-				"--pubsub.runtime.publisher.destination=foobar")) {
-			String port = context.getEnvironment().getProperty("local.server.port");
-			RestTemplate restTemplate = context.getBean(RestTemplate.class);
-			String toHttpEndpoint = "http://localhost:" + port;
+				"--spring.cloud.stream.pubsub.runtime.running-mode=PUBLISHER",
+				"--spring.cloud.stream.pubsub.runtime.publisher.destination=foobar")) {
+			var port = context.getEnvironment().getProperty("local.server.port");
+			var restTemplate = context.getBean(RestTemplate.class);
+			var toHttpEndpoint = "http://localhost:" + port;
 			restTemplate.postForObject(toHttpEndpoint, new HttpEntity<>("HELLO SCSt RUNTIME!!"), ResponseEntity.class);
-			OutputDestination outputDestination = context.getBean(OutputDestination.class);
-			Message<byte[]> outputMessage = outputDestination.receive(0, "foobar.destination");
+			var outputDestination = context.getBean(OutputDestination.class);
+			Message<byte[]> outputMessage = outputDestination.receive(10, "foobar.destination");
 			assertThat(new String(outputMessage.getPayload(), StandardCharsets.UTF_8)).isEqualTo("HELLO SCSt RUNTIME!!");
+		}
+	}
+
+	@Test
+	void sourceIntegrationTestWithPojo() throws Exception {
+		try (ConfigurableApplicationContext context = new SpringApplicationBuilder(AdditionalConfig.class)
+			.run(
+				"--server.port=0",
+				"--spring.cloud.stream.pubsub.runtime.running-mode=PUBLISHER",
+				"--spring.cloud.stream.pubsub.runtime.publisher.destination=foobar")) {
+			var port = context.getEnvironment().getProperty("local.server.port");
+			var restTemplate = context.getBean(RestTemplate.class);
+			var toHttpEndpoint = "http://localhost:" + port;
+			var testPojo = new TestPojo();
+			testPojo.setName("foobar");
+			restTemplate.postForObject(toHttpEndpoint, new HttpEntity<>(testPojo), ResponseEntity.class);
+			var outputDestination = context.getBean(OutputDestination.class);
+			Message<byte[]> outputMessage = outputDestination.receive(10, "foobar.destination");
+			ObjectMapper objectMapper = new ObjectMapper();
+			TestPojo testPojoReceived = objectMapper.readValue(outputMessage.getPayload(), TestPojo.class);
+			assertThat(testPojoReceived).isEqualTo(testPojo);
 		}
 	}
 
@@ -73,11 +96,31 @@ class PubSubRuntimeEndToEndIntegrationTests {
 		try (ConfigurableApplicationContext context = new SpringApplicationBuilder(AdditionalConfig.class, TestController.class)
 			.run(
 				"--server.port=8084",
-				"--pubsub.runtime.running-mode=SUBSCRIBER",
-				"--pubsub.runtime.subscriber.destination=foobar",
-				"--pubsub.runtime.subscriber.invokable-endpoint=http://localhost:8084/passthrough")) {
-			InputDestination inputDestination = context.getBean(InputDestination.class);
+				"--spring.cloud.stream.pubsub.runtime.running-mode=SUBSCRIBER",
+				"--spring.cloud.stream.pubsub.runtime.subscriber.destination=foobar",
+				"--spring.cloud.stream.pubsub.runtime.subscriber.invokable-endpoint=http://localhost:8084/passthrough")) {
+			var inputDestination = context.getBean(InputDestination.class);
 			Message<byte[]> inputMessage = MessageBuilder.withPayload("Hello".getBytes()).build();
+			inputDestination.send(inputMessage, "foobar.destination");
+			Assert.isTrue(latch.await(5, TimeUnit.SECONDS), "Failed to receive message");
+		}
+	}
+
+	@Test
+	void sinkIntegrationTestPojo() throws Exception {
+		try (ConfigurableApplicationContext context = new SpringApplicationBuilder(AdditionalConfig.class, TestController.class)
+			.run(
+				"--server.port=8084",
+				"--spring.cloud.stream.pubsub.runtime.running-mode=SUBSCRIBER",
+				"--spring.cloud.stream.pubsub.runtime.subscriber.destination=foobar",
+				"--http.request.headers-expression={'Content-Type':'application/json'}",
+				"--spring.cloud.stream.pubsub.runtime.subscriber.invokable-endpoint=http://localhost:8084/passthrough-pojo")) {
+			var inputDestination = context.getBean(InputDestination.class);
+			var testPojo = new TestPojo();
+			testPojo.setName("foobar");
+			var objectMapper = new ObjectMapper();
+			byte[] bytes = objectMapper.writeValueAsBytes(testPojo);
+			Message<byte[]> inputMessage = MessageBuilder.withPayload(bytes).build();
 			inputDestination.send(inputMessage, "foobar.destination");
 			Assert.isTrue(latch.await(5, TimeUnit.SECONDS), "Failed to receive message");
 		}
@@ -88,7 +131,7 @@ class PubSubRuntimeEndToEndIntegrationTests {
 
 		@Bean
 		public RestTemplate restTemplate() {
-			RestTemplate restTemplate = new RestTemplate();
+			var restTemplate = new RestTemplate();
 			restTemplate.getMessageConverters().add(new FormHttpMessageConverter());
 			return restTemplate;
 		}
@@ -102,6 +145,47 @@ class PubSubRuntimeEndToEndIntegrationTests {
 			assertThat(data).isEqualTo("Hello");
 			latch.countDown();
 			return HttpStatus.ACCEPTED;
+		}
+
+		@PostMapping("/passthrough-pojo")
+		public HttpStatus passthroughPojo(@RequestBody TestPojo data) {
+			var testPojo = new TestPojo();
+			testPojo.setName("foobar");
+			assertThat(data).isEqualTo(testPojo);
+			latch.countDown();
+			return HttpStatus.ACCEPTED;
+		}
+	}
+
+	private static class TestPojo {
+
+		private String name;
+
+		TestPojo() {
+		}
+
+		TestPojo(String name) {
+			this.name = name;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (!(o instanceof TestPojo testPojo)) return false;
+			return Objects.equals(getName(), testPojo.getName());
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(getName());
 		}
 	}
 }

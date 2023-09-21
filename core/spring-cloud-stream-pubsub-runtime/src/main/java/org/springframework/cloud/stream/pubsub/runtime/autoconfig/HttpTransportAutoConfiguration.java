@@ -19,6 +19,7 @@ package org.springframework.cloud.stream.pubsub.runtime.autoconfig;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import org.springframework.cloud.fn.supplier.http.HttpSupplierConfiguration;
 import reactor.core.publisher.Flux;
 
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -27,7 +28,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.fn.http.request.HttpRequestFunctionConfiguration;
-import org.springframework.cloud.fn.supplier.http.HttpSupplierConfiguration;
 import org.springframework.cloud.function.context.FunctionCatalog;
 import org.springframework.cloud.stream.config.BindingServiceProperties;
 import org.springframework.cloud.stream.function.FunctionConfiguration;
@@ -48,12 +48,12 @@ import org.springframework.messaging.Message;
  */
 @AutoConfiguration
 @AutoConfigureBefore({FunctionConfiguration.class})
-@ConditionalOnProperty(prefix = "pubsub.runtime", name = "transport-mode", havingValue = "HTTP", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "spring.cloud.stream.pubsub.runtime", name = "transport-mode", havingValue = "HTTP", matchIfMissing = true)
 @EnableConfigurationProperties(PubSubRuntimeProperties.class)
 public class HttpTransportAutoConfiguration {
 
 	@Configuration(proxyBeanMethods = false)
-	@ConditionalOnExpression("'${pubsub.runtime.running-mode}'.equals('PUBLISHER') && '${pubsub.runtime.transport-mode}'.equals('HTTP')")
+	@ConditionalOnExpression("'${spring.cloud.stream.pubsub.runtime.running-mode}'.equals('PUBLISHER') && '${spring.cloud.stream.pubsub.runtime.transport-mode}'.equals('HTTP')")
 	@Import(HttpSupplierConfiguration.class)
 	public static class HttpSourceAutoConfig {
 
@@ -67,7 +67,7 @@ public class HttpTransportAutoConfiguration {
 	}
 
 	@Configuration(proxyBeanMethods = false)
-	@ConditionalOnExpression("'${pubsub.runtime.running-mode}'.startsWith('SUBSCRIBER') && '${pubsub.runtime.transport-mode}'.equals('HTTP')")
+	@ConditionalOnExpression("'${spring.cloud.stream.pubsub.runtime.running-mode}'.startsWith('SUBSCRIBER') && '${spring.cloud.stream.pubsub.runtime.transport-mode}'.equals('HTTP')")
 	@Import(HttpRequestFunctionConfiguration.class)
 	public static class HttpSinkAutoConfig {
 
